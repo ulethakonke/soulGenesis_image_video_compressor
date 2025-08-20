@@ -197,6 +197,40 @@ def sidebar_controls():
         return mode, {"crf": crf, "preset": preset, "audio_bitrate": audio_bitrate}
 
 # -----------------------------
+# Environment Check
+# -----------------------------
+def setup_environment():
+    """Check for and handle missing dependencies"""
+    missing_deps = []
+    
+    # Check for Pillow
+    try:
+        import PIL
+    except ImportError:
+        missing_deps.append("Pillow")
+    
+    # Check for numpy
+    try:
+        import numpy
+    except ImportError:
+        missing_deps.append("numpy")
+    
+    # Check for FFmpeg (for video features)
+    try:
+        result = subprocess.run(["ffmpeg", "-version"], 
+                              capture_output=True, text=True, timeout=5)
+        ffmpeg_available = result.returncode == 0
+    except:
+        ffmpeg_available = False
+    
+    if missing_deps:
+        st.error(f"Missing dependencies: {', '.join(missing_deps)}")
+        st.info("Please install required packages using: pip install Pillow numpy")
+        st.stop()
+    
+    return ffmpeg_available
+
+# -----------------------------
 # Main Application
 # -----------------------------
 def main():
@@ -204,12 +238,12 @@ def main():
     if "compression_count" not in st.session_state:
         st.session_state.compression_count = 0
     
+    # Check environment setup
+    ffmpeg_available = setup_environment()
+    
     # Header
     st.title("✨ SoulGenesis - Ultimate Media Compression")
     st.markdown("Compress and reconstruct images and videos with advanced algorithms - **100% offline processing**")
-    
-    # Check for FFmpeg (warn only for video operations)
-    ffmpeg_available = check_ffmpeg()
     
     # Sidebar
     mode, settings = sidebar_controls()
